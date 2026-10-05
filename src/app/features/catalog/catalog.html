@@ -1,0 +1,308 @@
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+  <!-- Breadcrumb + heading -->
+  <nav class="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+    <a routerLink="/" class="hover:text-foreground">Home</a>
+    <span>/</span>
+    <span class="text-foreground">{{ heading() }}</span>
+  </nav>
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight">{{ heading() }}</h1>
+      <p class="mt-1 text-sm text-muted-foreground">{{ total() }} products</p>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="flex items-center gap-2">
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        class="lg:hidden"
+        (click)="filtersOpen.set(true)"
+      >
+        <ng-icon name="lucideSlidersHorizontal" size="16" />
+        Filters
+        @if (activeFilterCount() > 0) {
+          <span hlmBadge variant="accent" class="ml-1">{{ activeFilterCount() }}</span>
+        }
+      </button>
+
+      <div class="relative">
+        <select
+          [ngModel]="sort()"
+          (ngModelChange)="sort.set($event)"
+          class="h-9 appearance-none rounded-md border border-input bg-background pl-3 pr-9 text-sm font-medium shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="Sort products"
+        >
+          @for (opt of sortOptions; track opt.key) {
+            <option [value]="opt.key">{{ opt.label }}</option>
+          }
+        </select>
+        <ng-icon
+          name="lucideChevronDown"
+          size="16"
+          class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+        />
+      </div>
+
+      <div class="hidden items-center rounded-md border border-input p-0.5 sm:flex">
+        <button
+          hlmBtn
+          [variant]="viewMode() === 'grid' ? 'secondary' : 'ghost'"
+          size="icon-sm"
+          (click)="viewMode.set('grid')"
+          aria-label="Grid view"
+        >
+          <ng-icon name="lucideLayoutGrid" size="16" />
+        </button>
+        <button
+          hlmBtn
+          [variant]="viewMode() === 'list' ? 'secondary' : 'ghost'"
+          size="icon-sm"
+          (click)="viewMode.set('list')"
+          aria-label="List view"
+        >
+          <ng-icon name="lucideList" size="16" />
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex gap-8">
+    <!-- ══════════ Sidebar (desktop) ══════════ -->
+    <aside class="hidden w-64 shrink-0 lg:block">
+      <div class="sticky top-24 space-y-6">
+        <ng-container [ngTemplateOutlet]="filterPanel"></ng-container>
+      </div>
+    </aside>
+
+    <!-- ══════════ Results ══════════ -->
+    <div class="min-w-0 flex-1">
+      @if (loading()) {
+        <div
+          class="grid gap-4 sm:gap-6"
+          [class]="viewMode() === 'grid' ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'"
+        >
+          @for (s of [1, 2, 3, 4, 5, 6]; track s) {
+            <app-product-card-skeleton />
+          }
+        </div>
+      } @else if (products().length === 0) {
+        <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-24 text-center">
+          <ng-icon name="lucidePackageOpen" size="48" class="text-muted-foreground/50" />
+          <h3 class="mt-4 text-lg font-semibold">No products found</h3>
+          <p class="mt-1 max-w-xs text-sm text-muted-foreground">
+            Try adjusting your filters or search to find what you're looking for.
+          </p>
+          <button hlmBtn variant="outline" class="mt-6" (click)="clearAll()">Clear filters</button>
+        </div>
+      } @else {
+        <div
+          class="grid gap-4 sm:gap-6"
+          [class]="viewMode() === 'grid' ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'"
+        >
+          @for (product of products(); track product.id; let i = $index) {
+            <div class="animate-fade-up" [style.animation-delay.ms]="i * 40">
+              <app-product-card [product]="product" />
+            </div>
+          }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <div class="mt-10 flex items-center justify-center gap-1">
+            <button hlmBtn variant="outline" size="icon-sm" (click)="goToPage(page() - 1)" [disabled]="page() === 1" aria-label="Previous page">
+              <ng-icon name="lucideChevronLeft" size="16" />
+            </button>
+            @for (p of pages(); track p) {
+              <button
+                hlmBtn
+                [variant]="p === page() ? 'default' : 'ghost'"
+                size="icon-sm"
+                (click)="goToPage(p)"
+              >
+                {{ p }}
+              </button>
+            }
+            <button hlmBtn variant="outline" size="icon-sm" (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()" aria-label="Next page">
+              <ng-icon name="lucideChevronRight" size="16" />
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ Mobile filter drawer ══════════ -->
+@if (filtersOpen()) {
+  <div class="fixed inset-0 z-[60] lg:hidden">
+    <div class="absolute inset-0 bg-black/50 animate-fade-in" (click)="filtersOpen.set(false)"></div>
+    <div
+      class="absolute left-0 top-0 h-full w-80 max-w-[85%] overflow-y-auto bg-background p-5 shadow-xl animate-slide-in-right"
+    >
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Filters</h2>
+        <button hlmBtn variant="ghost" size="icon-sm" (click)="filtersOpen.set(false)" aria-label="Close">
+          <ng-icon name="lucideX" size="20" />
+        </button>
+      </div>
+      <ng-container [ngTemplateOutlet]="filterPanel"></ng-container>
+      <button hlmBtn class="mt-6 w-full" (click)="filtersOpen.set(false)">
+        Show {{ total() }} results
+      </button>
+    </div>
+  </div>
+}
+
+<!-- ══════════ Reusable filter panel ══════════ -->
+<ng-template #filterPanel>
+  <div class="flex items-center justify-between">
+    <h3 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Filters</h3>
+    @if (activeFilterCount() > 0) {
+      <button (click)="clearAll()" class="text-xs font-medium text-accent hover:underline">
+        Clear all
+      </button>
+    }
+  </div>
+
+  <!-- Categories -->
+  <div class="space-y-3 border-t border-border pt-5">
+    <p class="text-sm font-semibold">Category</p>
+    <div class="space-y-2">
+      @for (cat of allCategories(); track cat.id) {
+        <label class="flex cursor-pointer items-center gap-2.5 text-sm">
+          <input
+            type="checkbox"
+            class="peer sr-only"
+            [checked]="categoryIds().includes(cat.id)"
+            (change)="toggleIn(categoryIds, cat.id)"
+          />
+          <span
+            class="flex h-4 w-4 items-center justify-center rounded border border-input transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground"
+          >
+            @if (categoryIds().includes(cat.id)) {
+              <ng-icon name="lucideCheck" size="12" />
+            }
+          </span>
+          <span class="text-muted-foreground transition-colors peer-checked:text-foreground">{{ cat.name }}</span>
+          <span class="ml-auto text-xs text-muted-foreground/60">{{ cat.productCount }}</span>
+        </label>
+      }
+    </div>
+  </div>
+
+  <!-- Price -->
+  <div class="space-y-3 border-t border-border pt-5">
+    <p class="text-sm font-semibold">Price range</p>
+    <div class="flex items-center gap-2">
+      <input
+        hlmInput
+        type="number"
+        min="0"
+        placeholder="Min"
+        class="h-9"
+        [ngModel]="minPrice()"
+        (ngModelChange)="minPrice.set($event === '' || $event === null ? null : +$event)"
+        aria-label="Minimum price"
+      />
+      <span class="text-muted-foreground">–</span>
+      <input
+        hlmInput
+        type="number"
+        min="0"
+        placeholder="Max"
+        class="h-9"
+        [ngModel]="maxPrice()"
+        (ngModelChange)="maxPrice.set($event === '' || $event === null ? null : +$event)"
+        aria-label="Maximum price"
+      />
+    </div>
+    @if (facets()) {
+      <p class="text-xs text-muted-foreground">
+        From {{ facets()!.priceRange.min | price }} to {{ facets()!.priceRange.max | price }}
+      </p>
+    }
+  </div>
+
+  <!-- Brands -->
+  @if (facets() && facets()!.brands.length) {
+    <div class="space-y-3 border-t border-border pt-5">
+      <p class="text-sm font-semibold">Brand</p>
+      <div class="space-y-2">
+        @for (brand of facets()!.brands; track brand.value) {
+          <label class="flex cursor-pointer items-center gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              class="peer sr-only"
+              [checked]="brands().includes(brand.value)"
+              (change)="toggleIn(brands, brand.value)"
+            />
+            <span
+              class="flex h-4 w-4 items-center justify-center rounded border border-input transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground"
+            >
+              @if (brands().includes(brand.value)) {
+                <ng-icon name="lucideCheck" size="12" />
+              }
+            </span>
+            <span class="text-muted-foreground peer-checked:text-foreground">{{ brand.value }}</span>
+            <span class="ml-auto text-xs text-muted-foreground/60">{{ brand.count }}</span>
+          </label>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Rating -->
+  <div class="space-y-3 border-t border-border pt-5">
+    <p class="text-sm font-semibold">Rating</p>
+    <div class="space-y-1.5">
+      @for (r of [4, 3, 2]; track r) {
+        <button
+          (click)="setRating(r)"
+          class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors"
+          [class]="minRating() === r ? 'bg-secondary' : 'hover:bg-secondary/60'"
+        >
+          <span class="flex">
+            @for (star of [1, 2, 3, 4, 5]; track star) {
+              <ng-icon
+                name="lucideStar"
+                size="14"
+                [class]="star <= r ? 'text-accent [&_svg]:fill-accent' : 'text-muted-foreground/30'"
+              />
+            }
+          </span>
+          <span class="text-muted-foreground">& up</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Toggles -->
+  <div class="space-y-3 border-t border-border pt-5">
+    <label class="flex cursor-pointer items-center justify-between text-sm">
+      <span class="font-medium">In stock only</span>
+      <input
+        type="checkbox"
+        class="peer sr-only"
+        [checked]="inStockOnly()"
+        (change)="inStockOnly.set(!inStockOnly())"
+      />
+      <span
+        class="relative h-5 w-9 rounded-full bg-input transition-colors peer-checked:bg-primary after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"
+      ></span>
+    </label>
+    <label class="flex cursor-pointer items-center justify-between text-sm">
+      <span class="font-medium">On sale</span>
+      <input
+        type="checkbox"
+        class="peer sr-only"
+        [checked]="onSaleOnly()"
+        (change)="onSaleOnly.set(!onSaleOnly())"
+      />
+      <span
+        class="relative h-5 w-9 rounded-full bg-input transition-colors peer-checked:bg-primary after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"
+      ></span>
+    </label>
+  </div>
+</ng-template>

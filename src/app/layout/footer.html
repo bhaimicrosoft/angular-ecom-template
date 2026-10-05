@@ -1,0 +1,95 @@
+<footer class="mt-24 border-t border-border bg-card/40">
+  <!-- Perks -->
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-2 gap-6 border-b border-border py-10 lg:grid-cols-4">
+      @for (perk of perks; track perk.title) {
+        <div class="flex items-center gap-3">
+          <span
+            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent"
+          >
+            <ng-icon [name]="perk.icon" size="20" />
+          </span>
+          <div>
+            <p class="text-sm font-semibold text-foreground">{{ perk.title }}</p>
+            <p class="text-xs text-muted-foreground">{{ perk.desc }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+    <div class="grid gap-10 lg:grid-cols-6">
+      <div class="lg:col-span-2">
+        <a routerLink="/" class="flex items-center gap-2">
+          @if (brand().logoUrl) {
+            <img [src]="brand().logoUrl" alt="" class="h-9 w-9 rounded-lg object-cover" />
+          } @else {
+            <span
+              class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg"
+              >{{ brand().logoText || 'N' }}</span
+            >
+          }
+          <span class="text-xl font-bold tracking-tight">{{ brand().name }}</span>
+        </a>
+        <p class="mt-4 max-w-sm text-sm text-muted-foreground text-balance">
+          Premium electronics for people who care about design. Thoughtfully curated, beautifully
+          delivered.
+        </p>
+        <div class="mt-6">
+          <p class="text-sm font-semibold text-foreground">Join our newsletter</p>
+          <form class="mt-3 flex max-w-sm items-center gap-2" (submit)="$event.preventDefault()">
+            <input hlmInput type="email" placeholder="you@example.com" aria-label="Email" />
+            <button hlmBtn variant="accent" size="icon" aria-label="Subscribe">
+              <ng-icon name="lucideSend" size="18" />
+            </button>
+          </form>
+        </div>
+      </div>
+
+      @for (col of columns; track col.title) {
+        <div>
+          <h3 class="text-sm font-semibold text-foreground">{{ col.title }}</h3>
+          <ul class="mt-4 space-y-3">
+            @for (link of col.links; track link.link) {
+              <li>
+                <a
+                  [routerLink]="link.link"
+                  class="text-sm text-muted-foreground transition-colors hover:text-accent"
+                  >{{ link.label }}</a
+                >
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <div>
+        <h3 class="text-sm font-semibold text-foreground">Follow us</h3>
+        <div class="mt-4 flex gap-2">
+          @for (i of ['lucideGlobe', 'lucideMessageCircle', 'lucideRss', 'lucideShare2']; track i) {
+            <a
+              href="#"
+              class="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-all hover:border-accent hover:text-accent hover:-translate-y-0.5"
+              [attr.aria-label]="i"
+            >
+              <ng-icon [name]="i" size="18" />
+            </a>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row"
+    >
+      <p class="text-xs text-muted-foreground">© {{ year }} Nova Template. Crafted with Angular 21.</p>
+      <div class="flex gap-6 text-xs text-muted-foreground">
+        <a routerLink="/privacy" class="hover:text-foreground">Privacy</a>
+        <a routerLink="/terms" class="hover:text-foreground">Terms</a>
+        <a routerLink="/cookies" class="hover:text-foreground">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,198 @@
+<!-- ══════════════════════════ HERO ══════════════════════════ -->
+<section class="relative overflow-hidden">
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-accent/10 via-background to-background"
+  ></div>
+  <div
+    class="pointer-events-none absolute -right-40 -top-40 -z-10 h-96 w-96 rounded-full bg-accent/20 blur-3xl"
+  ></div>
+  <div
+    class="pointer-events-none absolute -bottom-40 -left-40 -z-10 h-96 w-96 rounded-full bg-chart-2/10 blur-3xl"
+  ></div>
+
+  <div class="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-24 lg:px-8">
+    <div class="animate-fade-up">
+      <span hlmBadge variant="outline" class="mb-5 gap-1.5 py-1 pl-1.5">
+        <span class="flex h-5 items-center rounded-full bg-accent px-2 text-[10px] font-bold text-accent-foreground"
+          >NEW</span
+        >
+        Autumn collection is here
+      </span>
+      <h1 class="text-4xl font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl">
+        Technology that feels
+        <span class="bg-gradient-to-r from-accent to-chart-4 bg-clip-text text-transparent"
+          >effortless.</span
+        >
+      </h1>
+      <p class="mt-6 max-w-lg text-lg text-muted-foreground text-balance">
+        Discover a thoughtfully curated collection of premium electronics — designed to elevate
+        your everyday.
+      </p>
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        <a hlmBtn size="lg" routerLink="/catalog">
+          Shop the collection
+          <ng-icon name="lucideArrowRight" size="18" />
+        </a>
+        <a hlmBtn size="lg" variant="outline" routerLink="/category/audio">Explore audio</a>
+      </div>
+      <div class="mt-10 grid grid-cols-2 gap-4 max-w-lg sm:grid-cols-4">
+        @for (stat of stats; track stat.label) {
+          <div>
+            <p class="text-xl font-bold text-foreground sm:text-2xl">{{ stat.value }}</p>
+            <p class="text-xs text-muted-foreground">{{ stat.label }}</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="relative animate-scale-in">
+      <a
+        [routerLink]="heroProduct() ? ['/product', heroProduct()!.slug] : ['/catalog']"
+        class="relative block aspect-square overflow-hidden rounded-3xl border border-border shadow-2xl"
+      >
+        <img
+          [src]="heroProduct()?.images?.[0]?.url ?? heroProduct()?.thumbnail"
+          [alt]="heroProduct()?.title ?? 'Featured product'"
+          class="h-full w-full object-cover"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+      </a>
+      <!-- Floating cards -->
+      <div
+        class="glass absolute -left-4 top-10 flex items-center gap-3 rounded-2xl border border-border p-3 shadow-lg animate-float"
+      >
+        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-success/15 text-success">
+          <ng-icon name="lucideTruck" size="20" />
+        </span>
+        <div>
+          <p class="text-xs font-semibold">Free shipping</p>
+          <p class="text-[11px] text-muted-foreground">On orders {{ cart.freeShippingThreshold() | price }}+</p>
+        </div>
+      </div>
+      <div
+        class="glass absolute -right-4 bottom-10 flex items-center gap-3 rounded-2xl border border-border p-3 shadow-lg animate-float"
+        style="animation-delay: 1.5s"
+      >
+        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
+          <ng-icon name="lucideStar" size="20" class="[&_svg]:fill-accent" />
+        </span>
+        <div>
+          <p class="text-xs font-semibold">4.9 / 5 rating</p>
+          <p class="text-[11px] text-muted-foreground">12k+ reviews</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ CATEGORIES ══════════════════════════ -->
+<section class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+  <div class="mb-8 flex items-end justify-between">
+    <div>
+      <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Shop by category</h2>
+      <p class="mt-2 text-muted-foreground">Find exactly what you're looking for.</p>
+    </div>
+    <a hlmBtn variant="ghost" routerLink="/catalog" class="hidden sm:inline-flex">
+      View all <ng-icon name="lucideArrowRight" size="16" />
+    </a>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+    @for (cat of categories(); track cat.id; let i = $index) {
+      <a
+        [routerLink]="['/category', cat.id]"
+        class="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-border animate-fade-up"
+        [style.animation-delay.ms]="i * 60"
+      >
+        <img
+          [src]="cat.image"
+          [alt]="cat.name"
+          loading="lazy"
+          class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+        <div class="absolute inset-x-0 bottom-0 p-4">
+          <p class="text-lg font-semibold text-white">{{ cat.name }}</p>
+          <p class="flex items-center gap-1 text-sm text-white/80 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            Shop now <ng-icon name="lucideArrowRight" size="14" />
+          </p>
+        </div>
+      </a>
+    }
+  </div>
+</section>
+
+<!-- ══════════════════════════ FEATURED ══════════════════════════ -->
+<section class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+  <div class="mb-8 flex items-end justify-between">
+    <div>
+      <span hlmBadge variant="accent" class="mb-3"><ng-icon name="lucideSparkles" size="12" /> Trending</span>
+      <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Featured products</h2>
+    </div>
+    <a hlmBtn variant="ghost" routerLink="/catalog" class="hidden sm:inline-flex">
+      Browse all <ng-icon name="lucideArrowRight" size="16" />
+    </a>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+    @if (featured().length === 0) {
+      @for (s of [1, 2, 3, 4]; track s) {
+        <app-product-card-skeleton />
+      }
+    } @else {
+      @for (product of featured(); track product.id; let i = $index) {
+        <div class="animate-fade-up" [style.animation-delay.ms]="i * 60">
+          <app-product-card [product]="product" />
+        </div>
+      }
+    }
+  </div>
+</section>
+
+<!-- ══════════════════════════ PROMO ══════════════════════════ -->
+<section class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+  <div
+    class="relative overflow-hidden rounded-3xl bg-primary px-6 py-14 text-primary-foreground sm:px-14"
+  >
+    <div class="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-accent/30 blur-3xl"></div>
+    <div class="relative max-w-xl">
+      <h2 class="text-3xl font-bold tracking-tight sm:text-4xl text-balance">
+        Up to 40% off the season's best
+      </h2>
+      <p class="mt-4 text-primary-foreground/80">
+        Limited-time savings across audio, wearables and more. Don't miss out.
+      </p>
+      <a hlmBtn size="lg" variant="accent" routerLink="/catalog" class="mt-8">
+        Shop the sale <ng-icon name="lucideArrowRight" size="18" />
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ TESTIMONIALS ══════════════════════════ -->
+<section class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+  <h2 class="mb-10 text-center text-2xl font-bold tracking-tight sm:text-3xl">
+    Loved by thousands
+  </h2>
+  <div class="grid gap-6 md:grid-cols-3">
+    @for (t of testimonials; track t.author; let i = $index) {
+      <figure
+        class="rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg animate-fade-up"
+        [style.animation-delay.ms]="i * 80"
+      >
+        <ng-icon name="lucideQuote" size="28" class="text-accent" />
+        <blockquote class="mt-4 text-sm leading-relaxed text-foreground">{{ t.quote }}</blockquote>
+        <figcaption class="mt-6 flex items-center gap-3">
+          <span
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-secondary font-semibold"
+            >{{ t.author.charAt(0) }}</span
+          >
+          <div>
+            <p class="text-sm font-semibold">{{ t.author }}</p>
+            <p class="text-xs text-muted-foreground">{{ t.role }}</p>
+          </div>
+        </figcaption>
+      </figure>
+    }
+  </div>
+</section>

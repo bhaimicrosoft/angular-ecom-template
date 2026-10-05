@@ -1,0 +1,514 @@
+<div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+  @if (cart.isEmpty()) {
+    <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-24 text-center">
+      <span class="flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
+        <ng-icon name="lucideShoppingBag" size="30" class="text-muted-foreground" />
+      </span>
+      <h2 class="mt-5 text-lg font-semibold">Nothing to check out</h2>
+      <p class="mt-1 text-sm text-muted-foreground">Add some products to your cart first.</p>
+      <a hlmBtn class="mt-6" routerLink="/catalog">Browse products</a>
+    </div>
+  } @else {
+    <h1 class="text-3xl font-bold tracking-tight">Checkout</h1>
+
+    <!-- Stepper -->
+    <div class="mt-6 flex items-center gap-2 sm:gap-4">
+      @for (s of steps; track s.n) {
+        <div class="flex items-center gap-2">
+          <span
+            class="flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors"
+            [class]="
+              step() > s.n
+                ? 'border-success bg-success text-success-foreground'
+                : step() === s.n
+                  ? 'border-accent bg-accent text-accent-foreground'
+                  : 'border-border text-muted-foreground'
+            "
+          >
+            @if (step() > s.n) {
+              <ng-icon name="lucideCheck" size="16" />
+            } @else {
+              {{ s.n }}
+            }
+          </span>
+          <span
+            class="hidden text-sm font-medium sm:block"
+            [class]="step() >= s.n ? 'text-foreground' : 'text-muted-foreground'"
+            >{{ s.label }}</span
+          >
+        </div>
+        @if (!$last) {
+          <div class="h-px flex-1 bg-border"></div>
+        }
+      }
+    </div>
+
+    <div class="mt-8 grid gap-8 lg:grid-cols-3">
+      <!-- Form column -->
+      <div class="lg:col-span-2">
+        <!-- Step 1: Information -->
+        @if (step() === 1) {
+          <div class="animate-fade-in space-y-6">
+            <!-- Contact -->
+            <div class="rounded-xl border border-border bg-card p-6">
+              <h2 class="text-lg font-semibold">Contact</h2>
+              <div class="mt-4">
+                <label hlmLabel class="mb-1.5 block">Email</label>
+                <input hlmInput type="email" [ngModel]="email()" (ngModelChange)="email.set($event)" placeholder="you@example.com" />
+                <p class="mt-1.5 text-xs text-muted-foreground">Order confirmation and receipts are sent here.</p>
+              </div>
+            </div>
+
+            <!-- Shipping address -->
+            <div class="rounded-xl border border-border bg-card p-6">
+              <div class="flex items-center justify-between">
+                <h2 class="flex items-center gap-2 text-lg font-semibold">
+                  <ng-icon name="lucideMapPin" size="18" class="text-accent" /> Shipping address
+                </h2>
+                @if (hasSaved()) {
+                  <button hlmBtn variant="outline" size="sm" (click)="openAddAddress('shipping')">
+                    <ng-icon name="lucidePlus" size="15" /> Add new
+                  </button>
+                }
+              </div>
+
+              @if (useSavedShipping()) {
+                <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                  @for (addr of savedAddresses(); track addr.id) {
+                    <div
+                      role="button"
+                      tabindex="0"
+                      (click)="selectShipping(addr.id)"
+                      (keydown.enter)="selectShipping(addr.id)"
+                      (keydown.space)="selectShipping(addr.id)"
+                      class="relative cursor-pointer rounded-xl border-2 p-4 transition-all"
+                      [class]="selectedShippingId() === addr.id ? 'border-accent bg-accent/5' : 'border-border hover:border-muted-foreground/40'"
+                    >
+                      <div class="flex items-start gap-3">
+                        <span
+                          class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2"
+                          [class]="selectedShippingId() === addr.id ? 'border-accent' : 'border-input'"
+                        >
+                          @if (selectedShippingId() === addr.id) {
+                            <span class="h-2.5 w-2.5 rounded-full bg-accent"></span>
+                          }
+                        </span>
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center gap-2">
+                            <span class="font-semibold">{{ addr.label }}</span>
+                            @if (addr.isDefault) {
+                              <span class="inline-flex items-center gap-1 rounded-full bg-accent/12 px-2 py-0.5 text-[10px] font-semibold text-accent">
+                                <ng-icon name="lucideStar" size="10" /> Default
+                              </span>
+                            }
+                          </div>
+                          <p class="mt-1 text-sm font-medium">{{ addr.name }}</p>
+                          <p class="text-sm text-muted-foreground">{{ addr.line1 }}</p>
+                          <p class="text-sm text-muted-foreground">{{ addr.city }}, {{ addr.state }} {{ addr.zip }} · {{ addr.country }}</p>
+                        </div>
+                        <button
+                          hlmBtn
+                          variant="ghost"
+                          size="icon-sm"
+                          (click)="$event.stopPropagation(); openEditAddress('shipping', addr)"
+                          aria-label="Edit address"
+                        >
+                          <ng-icon name="lucidePencil" size="15" />
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+                <button type="button" (click)="showManualShipping()" class="mt-4 text-sm font-medium text-accent underline-offset-2 hover:underline">
+                  + Enter a different address
+                </button>
+              } @else {
+                <div class="mt-5 grid gap-4">
+                  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label hlmLabel class="mb-1.5 block">First name</label>
+                      <input hlmInput [ngModel]="manualShipping().firstName" (ngModelChange)="updateManual('shipping', 'firstName', $event)" />
+                    </div>
+                    <div>
+                      <label hlmLabel class="mb-1.5 block">Last name</label>
+                      <input hlmInput [ngModel]="manualShipping().lastName" (ngModelChange)="updateManual('shipping', 'lastName', $event)" />
+                    </div>
+                  </div>
+                  <div>
+                    <label hlmLabel class="mb-1.5 block">Address</label>
+                    <input hlmInput [ngModel]="manualShipping().line1" (ngModelChange)="updateManual('shipping', 'line1', $event)" placeholder="123 Market Street" />
+                  </div>
+                  <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    <div>
+                      <label hlmLabel class="mb-1.5 block">City</label>
+                      <input hlmInput [ngModel]="manualShipping().city" (ngModelChange)="updateManual('shipping', 'city', $event)" />
+                    </div>
+                    <div>
+                      <label hlmLabel class="mb-1.5 block">State</label>
+                      <input hlmInput [ngModel]="manualShipping().state" (ngModelChange)="updateManual('shipping', 'state', $event)" />
+                    </div>
+                    <div>
+                      <label hlmLabel class="mb-1.5 block">ZIP</label>
+                      <input hlmInput [ngModel]="manualShipping().zip" (ngModelChange)="updateManual('shipping', 'zip', $event)" />
+                    </div>
+                    <div class="col-span-2 sm:col-span-1">
+                      <label hlmLabel class="mb-1.5 block">Country</label>
+                      <input hlmInput [ngModel]="manualShipping().country" (ngModelChange)="updateManual('shipping', 'country', $event)" />
+                    </div>
+                  </div>
+                  <label class="flex cursor-pointer select-none items-center gap-2 text-sm text-muted-foreground">
+                    <input type="checkbox" class="h-4 w-4 rounded border-input accent-accent" [ngModel]="saveShippingToAccount()" (ngModelChange)="saveShippingToAccount.set($event)" />
+                    Save this address to my account
+                  </label>
+                  @if (hasSaved()) {
+                    <button type="button" (click)="showSavedShipping()" class="text-left text-sm font-medium text-accent underline-offset-2 hover:underline">
+                      ← Use a saved address
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Billing address -->
+            <div class="rounded-xl border border-border bg-card p-6">
+              <h2 class="flex items-center gap-2 text-lg font-semibold">
+                <ng-icon name="lucideCreditCard" size="18" class="text-accent" /> Billing address
+              </h2>
+              <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  (click)="setBillingSame(true)"
+                  class="flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all"
+                  [class]="billingSame() ? 'border-accent bg-accent/5' : 'border-border hover:border-muted-foreground/40'"
+                >
+                  <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2" [class]="billingSame() ? 'border-accent' : 'border-input'">
+                    @if (billingSame()) { <span class="h-2.5 w-2.5 rounded-full bg-accent"></span> }
+                  </span>
+                  <span class="text-sm font-medium">Same as shipping</span>
+                </button>
+                <button
+                  type="button"
+                  (click)="setBillingSame(false)"
+                  class="flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all"
+                  [class]="!billingSame() ? 'border-accent bg-accent/5' : 'border-border hover:border-muted-foreground/40'"
+                >
+                  <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2" [class]="!billingSame() ? 'border-accent' : 'border-input'">
+                    @if (!billingSame()) { <span class="h-2.5 w-2.5 rounded-full bg-accent"></span> }
+                  </span>
+                  <span class="text-sm font-medium">Use a different billing address</span>
+                </button>
+              </div>
+
+              @if (!billingSame()) {
+                <div class="mt-5 border-t border-border pt-5">
+                  <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-muted-foreground">Billing details</p>
+                    @if (hasSaved()) {
+                      <button hlmBtn variant="outline" size="sm" (click)="openAddAddress('billing')">
+                        <ng-icon name="lucidePlus" size="15" /> Add new
+                      </button>
+                    }
+                  </div>
+
+                  @if (useSavedBilling()) {
+                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                      @for (addr of savedAddresses(); track addr.id) {
+                        <div
+                          role="button"
+                          tabindex="0"
+                          (click)="selectBilling(addr.id)"
+                          (keydown.enter)="selectBilling(addr.id)"
+                          (keydown.space)="selectBilling(addr.id)"
+                          class="relative cursor-pointer rounded-xl border-2 p-4 transition-all"
+                          [class]="selectedBillingId() === addr.id ? 'border-accent bg-accent/5' : 'border-border hover:border-muted-foreground/40'"
+                        >
+                          <div class="flex items-start gap-3">
+                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2" [class]="selectedBillingId() === addr.id ? 'border-accent' : 'border-input'">
+                              @if (selectedBillingId() === addr.id) { <span class="h-2.5 w-2.5 rounded-full bg-accent"></span> }
+                            </span>
+                            <div class="min-w-0 flex-1">
+                              <span class="font-semibold">{{ addr.label }}</span>
+                              <p class="mt-1 text-sm font-medium">{{ addr.name }}</p>
+                              <p class="text-sm text-muted-foreground">{{ addr.line1 }}</p>
+                              <p class="text-sm text-muted-foreground">{{ addr.city }}, {{ addr.state }} {{ addr.zip }} · {{ addr.country }}</p>
+                            </div>
+                            <button hlmBtn variant="ghost" size="icon-sm" (click)="$event.stopPropagation(); openEditAddress('billing', addr)" aria-label="Edit address">
+                              <ng-icon name="lucidePencil" size="15" />
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                    <button type="button" (click)="showManualBilling()" class="mt-4 text-sm font-medium text-accent underline-offset-2 hover:underline">
+                      + Enter a different address
+                    </button>
+                  } @else {
+                    <div class="mt-4 grid gap-4">
+                      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                          <label hlmLabel class="mb-1.5 block">First name</label>
+                          <input hlmInput [ngModel]="manualBilling().firstName" (ngModelChange)="updateManual('billing', 'firstName', $event)" />
+                        </div>
+                        <div>
+                          <label hlmLabel class="mb-1.5 block">Last name</label>
+                          <input hlmInput [ngModel]="manualBilling().lastName" (ngModelChange)="updateManual('billing', 'lastName', $event)" />
+                        </div>
+                      </div>
+                      <div>
+                        <label hlmLabel class="mb-1.5 block">Address</label>
+                        <input hlmInput [ngModel]="manualBilling().line1" (ngModelChange)="updateManual('billing', 'line1', $event)" placeholder="123 Market Street" />
+                      </div>
+                      <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        <div>
+                          <label hlmLabel class="mb-1.5 block">City</label>
+                          <input hlmInput [ngModel]="manualBilling().city" (ngModelChange)="updateManual('billing', 'city', $event)" />
+                        </div>
+                        <div>
+                          <label hlmLabel class="mb-1.5 block">State</label>
+                          <input hlmInput [ngModel]="manualBilling().state" (ngModelChange)="updateManual('billing', 'state', $event)" />
+                        </div>
+                        <div>
+                          <label hlmLabel class="mb-1.5 block">ZIP</label>
+                          <input hlmInput [ngModel]="manualBilling().zip" (ngModelChange)="updateManual('billing', 'zip', $event)" />
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                          <label hlmLabel class="mb-1.5 block">Country</label>
+                          <input hlmInput [ngModel]="manualBilling().country" (ngModelChange)="updateManual('billing', 'country', $event)" />
+                        </div>
+                      </div>
+                      @if (hasSaved()) {
+                        <button type="button" (click)="showSavedBilling()" class="text-left text-sm font-medium text-accent underline-offset-2 hover:underline">
+                          ← Use a saved address
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="flex justify-between">
+              <a hlmBtn variant="ghost" routerLink="/cart">← Back to cart</a>
+              <button hlmBtn (click)="next()" [disabled]="!infoValid()">
+                Continue to shipping <ng-icon name="lucideChevronRight" size="16" />
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Step 2: Shipping -->
+        @if (step() === 2) {
+          <div class="animate-fade-in rounded-xl border border-border bg-card p-6">
+            <h2 class="text-lg font-semibold">Shipping method</h2>
+            <div class="mt-5 space-y-3">
+              @for (method of shippingMethods(); track method.id) {
+                <button
+                  (click)="shippingMethodId.set(method.id)"
+                  class="flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition-all"
+                  [class]="shippingMethod().id === method.id ? 'border-accent bg-accent/5' : 'border-border hover:border-muted-foreground/40'"
+                >
+                  <span
+                    class="flex h-5 w-5 items-center justify-center rounded-full border-2"
+                    [class]="shippingMethod().id === method.id ? 'border-accent' : 'border-input'"
+                  >
+                    @if (shippingMethod().id === method.id) {
+                      <span class="h-2.5 w-2.5 rounded-full bg-accent"></span>
+                    }
+                  </span>
+                  <div class="flex-1">
+                    <p class="font-medium">{{ method.label }}</p>
+                    <p class="text-sm text-muted-foreground">{{ method.desc }}</p>
+                  </div>
+                  <span class="font-semibold">
+                    {{ method.price === 0 ? 'Free' : (method.price | price) }}
+                  </span>
+                </button>
+              }
+            </div>
+            <div class="mt-6 flex justify-between">
+              <button hlmBtn variant="ghost" (click)="back()">← Information</button>
+              <button hlmBtn (click)="next()">
+                Continue to payment <ng-icon name="lucideChevronRight" size="16" />
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Step 3: Payment -->
+        @if (step() === 3) {
+          <div class="animate-fade-in rounded-xl border border-border bg-card p-6">
+            <h2 class="flex items-center gap-2 text-lg font-semibold">
+              Payment <ng-icon name="lucideLock" size="16" class="text-success" />
+            </h2>
+            <p class="mt-1 text-sm text-muted-foreground">This is a demo — no real payment is taken.</p>
+            <div class="mt-5 grid gap-4">
+              <div>
+                <label hlmLabel class="mb-1.5 block">Card number</label>
+                <input hlmInput [ngModel]="payment().card" (ngModelChange)="updatePayment('card', $event)" placeholder="4242 4242 4242 4242" inputmode="numeric" />
+              </div>
+              <div>
+                <label hlmLabel class="mb-1.5 block">Name on card</label>
+                <input hlmInput [ngModel]="payment().name" (ngModelChange)="updatePayment('name', $event)" />
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label hlmLabel class="mb-1.5 block">Expiry</label>
+                  <input hlmInput [ngModel]="payment().expiry" (ngModelChange)="updatePayment('expiry', $event)" placeholder="MM/YY" />
+                </div>
+                <div>
+                  <label hlmLabel class="mb-1.5 block">CVC</label>
+                  <input hlmInput [ngModel]="payment().cvc" (ngModelChange)="updatePayment('cvc', $event)" placeholder="123" inputmode="numeric" />
+                </div>
+              </div>
+            </div>
+            <div class="mt-6 flex justify-between">
+              <button hlmBtn variant="ghost" (click)="back()">← Shipping</button>
+              <button hlmBtn size="lg" (click)="placeOrder()" [disabled]="!paymentValid() || placing()">
+                @if (placing()) {
+                  <span class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+                  Processing…
+                } @else {
+                  <ng-icon name="lucideLock" size="16" /> Pay {{ orderTotal() | price }}
+                }
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Summary -->
+      <div class="lg:col-span-1">
+        <div class="sticky top-24 rounded-xl border border-border bg-card p-6">
+          <h2 class="text-lg font-semibold">Order summary</h2>
+          <ul class="mt-4 space-y-4">
+            @for (line of cart.lines(); track line.product.id + (line.variant?.id ?? '')) {
+              <li class="flex gap-3">
+                <div class="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                  <img [src]="line.product.thumbnail" [alt]="line.product.title" class="h-full w-full object-cover" />
+                  <span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{{ line.quantity }}</span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="line-clamp-1 text-sm font-medium">{{ line.product.title }}</p>
+                  @if (line.variant && line.variant.title !== 'Default') {
+                    <p class="text-xs text-muted-foreground">{{ line.variant.title }}</p>
+                  }
+                </div>
+                <span class="text-sm font-medium">{{ (line.variant?.price ?? line.product.price) * line.quantity | price }}</span>
+              </li>
+            }
+          </ul>
+
+          <dl class="mt-6 space-y-2.5 border-t border-border pt-4 text-sm">
+            <div class="flex justify-between">
+              <dt class="text-muted-foreground">Subtotal</dt>
+              <dd>{{ cart.subtotal() | price }}</dd>
+            </div>
+            @if (cart.discount() > 0) {
+              <div class="flex justify-between text-success">
+                <dt>Discount</dt>
+                <dd>−{{ cart.discount() | price }}</dd>
+              </div>
+            }
+            <div class="flex justify-between">
+              <dt class="text-muted-foreground">Shipping</dt>
+              <dd>{{ shippingMethod().price === 0 ? 'Free' : (shippingMethod().price | price) }}</dd>
+            </div>
+            <div class="flex justify-between">
+              <dt class="text-muted-foreground">{{ config.tax().label }}</dt>
+              <dd>{{ cart.tax() | price }}</dd>
+            </div>
+            <div class="flex justify-between border-t border-border pt-3 text-base font-bold">
+              <dt>Total</dt>
+              <dd>{{ orderTotal() | price }}</dd>
+            </div>
+          </dl>
+
+          @if (step() > 1 && shippingAddress(); as ship) {
+            <div class="mt-5 space-y-3 border-t border-border pt-4 text-sm">
+              <div>
+                <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <ng-icon name="lucideMapPin" size="13" /> Ship to
+                </p>
+                <p class="mt-1 font-medium">{{ ship.name }}</p>
+                <p class="text-muted-foreground">{{ ship.line1 }}, {{ ship.city }} {{ ship.zip }}</p>
+              </div>
+              <div>
+                <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <ng-icon name="lucideCreditCard" size="13" /> Bill to
+                </p>
+                @if (billingSame()) {
+                  <p class="mt-1 text-muted-foreground">Same as shipping</p>
+                } @else if (billingAddress(); as bill) {
+                  <p class="mt-1 font-medium">{{ bill.name }}</p>
+                  <p class="text-muted-foreground">{{ bill.line1 }}, {{ bill.city }} {{ bill.zip }}</p>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Saved-address editor -->
+    @if (editorOpen()) {
+      <div class="fixed inset-0 z-[120] flex items-end justify-center bg-black/50 backdrop-blur-sm animate-fade-in sm:items-center">
+        <div class="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-card p-6 shadow-2xl animate-scale-in sm:rounded-2xl">
+          <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-lg font-semibold">{{ editorDraft().id ? 'Edit address' : 'New address' }}</h3>
+            <button hlmBtn variant="ghost" size="icon-sm" (click)="closeEditor()" aria-label="Close"><ng-icon name="lucideX" size="18" /></button>
+          </div>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="space-y-1.5">
+              <label hlmLabel>Label</label>
+              <input hlmInput placeholder="Home, Work…" [ngModel]="editorDraft().label" (ngModelChange)="patchEditor('label', $event)" />
+            </div>
+            <div class="space-y-1.5">
+              <label hlmLabel>Full name</label>
+              <input hlmInput placeholder="Ada Lovelace" [ngModel]="editorDraft().name" (ngModelChange)="patchEditor('name', $event)" />
+            </div>
+            <div class="space-y-1.5 sm:col-span-2">
+              <label hlmLabel>Street address</label>
+              <input hlmInput placeholder="128 Market Street, Apt 9" [ngModel]="editorDraft().line1" (ngModelChange)="patchEditor('line1', $event)" />
+            </div>
+            <div class="space-y-1.5">
+              <label hlmLabel>City</label>
+              <input hlmInput placeholder="San Francisco" [ngModel]="editorDraft().city" (ngModelChange)="patchEditor('city', $event)" />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <label hlmLabel>State</label>
+                <input hlmInput placeholder="CA" [ngModel]="editorDraft().state" (ngModelChange)="patchEditor('state', $event)" />
+              </div>
+              <div class="space-y-1.5">
+                <label hlmLabel>ZIP</label>
+                <input hlmInput placeholder="94103" [ngModel]="editorDraft().zip" (ngModelChange)="patchEditor('zip', $event)" />
+              </div>
+            </div>
+            <div class="space-y-1.5">
+              <label hlmLabel>Country</label>
+              <input hlmInput placeholder="United States" [ngModel]="editorDraft().country" (ngModelChange)="patchEditor('country', $event)" />
+            </div>
+            <div class="space-y-1.5">
+              <label hlmLabel>Phone (optional)</label>
+              <input hlmInput placeholder="+1 (415) 555-0101" [ngModel]="editorDraft().phone" (ngModelChange)="patchEditor('phone', $event)" />
+            </div>
+          </div>
+          <label class="mt-4 flex cursor-pointer select-none items-center gap-2 text-sm text-muted-foreground">
+            <input type="checkbox" class="h-4 w-4 rounded border-input accent-accent" [ngModel]="editorDraft().isDefault" (ngModelChange)="patchEditor('isDefault', $event)" />
+            Set as default address
+          </label>
+          <div class="mt-6 flex gap-3">
+            <button hlmBtn variant="accent" (click)="saveEditor()" [disabled]="!editorValid() || editorSaving()">
+              @if (editorSaving()) {
+                <span class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span> Saving…
+              } @else {
+                <ng-icon name="lucideCheck" size="17" /> Save address
+              }
+            </button>
+            <button hlmBtn variant="ghost" (click)="closeEditor()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>

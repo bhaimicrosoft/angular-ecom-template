@@ -1,0 +1,60 @@
+<div class="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
+  <div class="flex flex-col items-center text-center">
+    <span
+      class="flex h-20 w-20 items-center justify-center rounded-full bg-success/15 text-success animate-scale-in"
+    >
+      <ng-icon name="lucideCircleCheck" size="44" />
+    </span>
+    <h1 class="mt-6 text-3xl font-bold tracking-tight animate-fade-up">Thank you for your order!</h1>
+    <p class="mt-2 text-muted-foreground animate-fade-up">
+      Your order has been placed and is being prepared with care.
+    </p>
+    <p class="mt-4 rounded-full bg-secondary px-4 py-1.5 text-sm font-semibold animate-fade-up">
+      Order #{{ orderNumber }}
+    </p>
+  </div>
+
+  <!-- Tracker -->
+  <div class="mt-12 rounded-2xl border border-border bg-card p-6">
+    <div class="flex items-center gap-2 text-sm font-medium">
+      <ng-icon name="lucidePackage" size="18" class="text-accent" />
+      Estimated delivery: {{ eta | date: 'fullDate' }}
+    </div>
+    <div class="mt-6 flex items-center">
+      @for (s of steps; track s.label; let i = $index) {
+        <div class="flex flex-col items-center gap-2" [style.flex]="i < steps.length - 1 ? '1' : '0 0 auto'">
+          <div class="flex w-full items-center">
+            <span
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-xs"
+              [class]="s.done ? 'border-success bg-success text-success-foreground' : 'border-border text-muted-foreground'"
+            >
+              @if (s.done) {
+                <ng-icon name="lucideCircleCheck" size="16" />
+              } @else {
+                {{ i + 1 }}
+              }
+            </span>
+            @if (i < steps.length - 1) {
+              <span class="h-0.5 flex-1" [class]="steps[i + 1].done ? 'bg-success' : 'bg-border'"></span>
+            }
+          </div>
+          <span class="whitespace-nowrap text-[11px] text-muted-foreground">{{ s.label }}</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="mt-8 flex items-center gap-3 rounded-xl border border-border bg-secondary/40 p-4 text-sm">
+    <ng-icon name="lucideMail" size="20" class="text-accent" />
+    <p class="text-muted-foreground">
+      A confirmation email with your receipt and tracking details is on its way to your inbox.
+    </p>
+  </div>
+
+  <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+    <a hlmBtn routerLink="/catalog">
+      Continue shopping <ng-icon name="lucideArrowRight" size="16" />
+    </a>
+    <a hlmBtn variant="outline" routerLink="/">Back to home</a>
+  </div>
+</div>

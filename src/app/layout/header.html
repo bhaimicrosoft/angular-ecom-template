@@ -1,0 +1,275 @@
+<!-- Announcement bar -->
+<div
+  class="bg-primary text-primary-foreground text-center text-xs sm:text-sm py-2 px-4 font-medium tracking-wide"
+>
+  <span class="inline-flex items-center gap-2">
+    <ng-icon name="lucideSparkles" size="14" />
+    Free express shipping on orders over {{ cart.freeShippingThreshold() | price }} — shop the new arrivals
+  </span>
+</div>
+
+<header
+  class="sticky top-0 z-50 w-full transition-all duration-300"
+  [class]="scrolled() ? 'glass border-b border-border shadow-sm' : 'bg-background border-b border-transparent'"
+>
+  <div class="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+    <!-- Mobile menu button -->
+    <button hlmBtn variant="ghost" size="icon" class="lg:hidden" (click)="toggleMobile()" aria-label="Menu">
+      <ng-icon [name]="mobileOpen() ? 'lucideX' : 'lucideMenu'" size="22" />
+    </button>
+
+    <!-- Logo -->
+    <a routerLink="/" class="flex items-center gap-2 shrink-0">
+      @if (brand().logoUrl) {
+        <img [src]="brand().logoUrl" alt="" class="h-9 w-9 rounded-lg object-cover" />
+      } @else {
+        <span
+          class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg"
+          >{{ brand().logoText || 'N' }}</span
+        >
+      }
+      <span class="text-xl font-bold tracking-tight hidden sm:block">{{ brand().name }}</span>
+    </a>
+
+    <!-- Desktop nav -->
+    <nav class="hidden lg:flex items-center gap-1 ml-4">
+      @for (item of nav(); track item.link) {
+        <a
+          [routerLink]="item.link"
+          routerLinkActive="text-foreground after:scale-x-100"
+          [routerLinkActiveOptions]="{ exact: item.link === '/' }"
+          class="relative px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:origin-left after:scale-x-0 after:bg-accent after:transition-transform after:duration-300 hover:after:scale-x-100"
+          >{{ item.label }}</a
+        >
+      }
+    </nav>
+
+    <!-- Search (desktop) -->
+    <div class="ml-auto hidden md:flex items-center max-w-xs w-full">
+      <div class="relative w-full">
+        <ng-icon
+          name="lucideSearch"
+          size="18"
+          class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+        />
+        <input
+          hlmInput
+          [(ngModel)]="search"
+          (keyup.enter)="submitSearch()"
+          type="search"
+          placeholder="Search products…"
+          class="pl-10 rounded-full bg-secondary/60 border-transparent focus-visible:bg-background"
+          aria-label="Search products"
+        />
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-1 md:ml-2 ml-auto md:ml-2">
+      <button hlmBtn variant="ghost" size="icon" class="md:hidden" (click)="toggleSearch()" aria-label="Search">
+        <ng-icon name="lucideSearch" size="20" />
+      </button>
+
+      <button hlmBtn variant="ghost" size="icon" (click)="cycleTheme()" aria-label="Toggle theme">
+        @switch (theme.mode()) {
+          @case ('light') {
+            <ng-icon name="lucideSun" size="20" />
+          }
+          @case ('dark') {
+            <ng-icon name="lucideMoon" size="20" />
+          }
+          @default {
+            <ng-icon name="lucideMonitor" size="20" />
+          }
+        }
+      </button>
+
+      <a hlmBtn variant="ghost" size="icon" routerLink="/wishlist" aria-label="Wishlist" class="relative">
+        <ng-icon name="lucideHeart" size="20" />
+        @if (wishlist.count() > 0) {
+          <span
+            class="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground animate-scale-in"
+            >{{ wishlist.count() }}</span
+          >
+        }
+      </a>
+
+      <!-- Account -->
+      <div class="relative">
+        @if (auth.isAuthenticated()) {
+          <button
+            type="button"
+            (click)="toggleAccount()"
+            class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary text-xs font-bold text-primary-foreground ring-2 ring-transparent transition hover:ring-accent/40"
+            aria-label="Account menu"
+          >
+            @if (auth.user()?.avatarUrl) {
+              <img [src]="auth.user()!.avatarUrl" alt="" class="h-full w-full object-cover" />
+            } @else {
+              {{ auth.initials() }}
+            }
+          </button>
+        } @else {
+          <a hlmBtn variant="ghost" size="icon" routerLink="/login" aria-label="Sign in">
+            <ng-icon name="lucideUser" size="20" />
+          </a>
+        }
+
+        @if (accountOpen() && auth.isAuthenticated()) {
+          <!-- backdrop -->
+          <button
+            type="button"
+            class="fixed inset-0 z-40 cursor-default"
+            (click)="toggleAccount()"
+            aria-hidden="true"
+            tabindex="-1"
+          ></button>
+          <div
+            class="absolute right-0 top-full z-50 mt-2 w-60 origin-top-right rounded-xl border border-border bg-popover p-1.5 shadow-lg animate-scale-in"
+          >
+            <div class="flex items-center gap-3 rounded-lg px-3 py-2.5">
+              <div class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                @if (auth.user()?.avatarUrl) {
+                  <img [src]="auth.user()!.avatarUrl" alt="" class="h-full w-full object-cover" />
+                } @else {
+                  {{ auth.initials() }}
+                }
+              </div>
+              <div class="min-w-0">
+                <div class="truncate text-sm font-semibold">{{ auth.user()?.name }}</div>
+                <div class="truncate text-xs text-muted-foreground">{{ auth.user()?.email }}</div>
+              </div>
+            </div>
+            <div class="my-1 h-px bg-border"></div>
+            <a
+              routerLink="/account"
+              (click)="toggleAccount()"
+              class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <ng-icon name="lucideUser" size="17" /> My account
+            </a>
+            <a
+              routerLink="/account/orders"
+              (click)="toggleAccount()"
+              class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <ng-icon name="lucidePackage" size="17" /> My orders
+            </a>
+            <a
+              routerLink="/wishlist"
+              (click)="toggleAccount()"
+              class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <ng-icon name="lucideHeart" size="17" /> Wishlist
+            </a>
+            <a
+              routerLink="/account/settings"
+              (click)="toggleAccount()"
+              class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <ng-icon name="lucideSettings" size="17" /> Settings
+            </a>
+            <div class="my-1 h-px bg-border"></div>
+            <button
+              type="button"
+              (click)="logout()"
+              class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+            >
+              <ng-icon name="lucideLogOut" size="17" /> Sign out
+            </button>
+          </div>
+        }
+      </div>
+
+      <a hlmBtn variant="ghost" size="icon" routerLink="/cart" aria-label="Cart" class="relative">
+        <ng-icon name="lucideShoppingBag" size="20" />
+        @if (cart.count() > 0) {
+          <span
+            class="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground animate-scale-in"
+            >{{ cart.count() }}</span
+          >
+        }
+      </a>
+    </div>
+  </div>
+
+  <!-- Mobile search bar -->
+  @if (searchOpen()) {
+    <div class="md:hidden border-t border-border px-4 py-3 animate-fade-in">
+      <div class="relative">
+        <ng-icon
+          name="lucideSearch"
+          size="18"
+          class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+        />
+        <input
+          hlmInput
+          [(ngModel)]="search"
+          (keyup.enter)="submitSearch()"
+          type="search"
+          placeholder="Search products…"
+          class="pl-10"
+          aria-label="Search products"
+        />
+      </div>
+    </div>
+  }
+
+  <!-- Mobile nav drawer -->
+  @if (mobileOpen()) {
+    <div class="lg:hidden border-t border-border bg-background animate-fade-in">
+      <nav class="flex flex-col p-4 gap-1">
+        @for (item of nav(); track item.link) {
+          <a
+            [routerLink]="item.link"
+            (click)="toggleMobile()"
+            routerLinkActive="bg-secondary text-foreground"
+            [routerLinkActiveOptions]="{ exact: item.link === '/' }"
+            class="rounded-lg px-4 py-3 text-base font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >{{ item.label }}</a
+          >
+        }
+        <div class="my-2 h-px bg-border"></div>
+        @if (auth.isAuthenticated()) {
+          <div class="flex items-center gap-3 px-4 py-2">
+            <div class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary text-xs font-bold text-primary-foreground">
+              @if (auth.user()?.avatarUrl) {
+                <img [src]="auth.user()!.avatarUrl" alt="" class="h-full w-full object-cover" />
+              } @else {
+                {{ auth.initials() }}
+              }
+            </div>
+            <div class="min-w-0">
+              <div class="truncate text-sm font-semibold">{{ auth.user()?.name }}</div>
+              <div class="truncate text-xs text-muted-foreground">{{ auth.user()?.email }}</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            (click)="toggleMobile(); logout()"
+            class="flex items-center gap-2 rounded-lg px-4 py-3 text-base font-medium text-destructive transition-colors hover:bg-destructive/10"
+          >
+            <ng-icon name="lucideLogOut" size="18" /> Sign out
+          </button>
+        } @else {
+          <a
+            routerLink="/login"
+            (click)="toggleMobile()"
+            class="flex items-center gap-2 rounded-lg px-4 py-3 text-base font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <ng-icon name="lucideLogIn" size="18" /> Sign in
+          </a>
+          <a
+            routerLink="/signup"
+            (click)="toggleMobile()"
+            hlmBtn
+            variant="accent"
+            class="mt-1 justify-start"
+          >
+            <ng-icon name="lucideUser" size="18" /> Create account
+          </a>
+        }
+      </nav>
+    </div>
+  }
+</header>
